@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo ">>> $1\n"
+
+mpif90 -fopenmp inc/*o -I inc "$1"  -g -fcheck=all  -fintrinsic-modules-path inc/  -o a.out
