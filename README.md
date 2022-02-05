@@ -1,2 +1,2 @@
-## Faba, an extended Fortran
+## Faba, an extention of Fortran
 
