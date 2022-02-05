@@ -185,7 +185,11 @@ echo "Standard library (faba) is compiled.          "
 mpif90 -fopenmp -fopenacc -shared -fPIC -g -fcheck=all -fintrinsic-modules-path inc/  -c ./src/faba/faba.f90 -o  ./inc/faba.o
 
 mv *.mod inc/
-chmod +x ./faba
+sudo chmod +x ./faba
+
+#create symbolic link
+sudo ln -si $PWD/faba /usr/local/bin/faba
+
 echo " "
 echo "Faba (21.10) is successfully installed! "
 echo "Let's build your script by"
