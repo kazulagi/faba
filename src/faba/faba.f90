@@ -15,6 +15,7 @@ module faba
     use KinematicClass
     use RandomClass
     use ArrayClass
+    use COOClass
     use RangeClass
     use PCAClass
     use SDEClass

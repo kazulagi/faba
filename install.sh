@@ -79,6 +79,12 @@ echo " >> ArrayClass.o "
 echo " | =>      | (20%)\r\c"
 mpif90 -Ofast -fopenmp -fopenacc -shared -fPIC -g -fcheck=all -fintrinsic-modules-path inc/  -c ./src/ArrayClass/ArrayClass.f90 -o  ./inc/ArrayClass.o -llapack -lblas
 
+
+echo "Compiling ./src/COOClass/COOClass.f90 " 
+echo " >> COOClass.o "
+echo " | =>      | (20%)\r\c"
+mpif90 -Ofast -fopenmp -fopenacc -shared -fPIC -g -fcheck=all -fintrinsic-modules-path inc/  -c ./src/COOClass/COOClass.f90 -o  ./inc/COOClass.o -llapack -lblas
+
 echo "Compiling ./src/RangeClass/RangeClass.f90 " 
 echo " >> RangeClass.o "
 echo " | =>      | (20%)\r\c"
