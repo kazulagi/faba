@@ -4,6 +4,27 @@ module ArrayClass
     use RandomClass
     implicit none
 
+
+    type :: Array_
+        integer(int32),allocatable  :: inta(:,:)
+        real(real64),allocatable ::reala(:,:)
+        type(FlexibleChar_),allocatable :: list(:,:)
+        character(:),allocatable :: dtype
+    contains
+        procedure, public :: array => arrayarrayReal
+        procedure, public :: init => zerosRealArrayArrayClass
+        procedure, public :: zeros => zerosRealArrayArrayClass
+        procedure, public :: eye => eyeRealArrayArrayClass
+        procedure, public :: unit => eyeRealArrayArrayClass
+        procedure, public :: random => randomRealArrayArrayClass
+        procedure, public :: print => printArrayClass
+        procedure, public :: T => TransposeArrayClass
+        procedure, public :: get => getArrayClass
+        procedure, public :: set => setArrayClass
+        
+        
+    end type
+
     !interface arrayarray
     !    module procedure arrayarrayReal, arrayarrayInt
     !end interface arrayarray
@@ -15,7 +36,6 @@ module ArrayClass
     !interface fit
     !    module procedure :: fitReal64
     !end interface
-
 
     interface I_dx
         module procedure :: I_dx_real64,I_dx_real32,I_dx_complex64
@@ -60,6 +80,10 @@ module ArrayClass
                  linspace1Dreal32, linspace2D, linspace3D,linspace4D
     end interface linspace
 
+    interface set
+        module procedure :: setInt32Vector
+    end interface set
+
     interface windowing
         module procedure :: windowingComplex64,windowingReal64
     end interface windowing
@@ -83,6 +107,10 @@ module ArrayClass
     interface zeros
         module procedure :: zerosRealArray, zerosRealVector,zerosRealArray3,zerosRealArray4,zerosRealArray5,&
             zerosRealArray_64, zerosRealVector_64,zerosRealArray3_64,zerosRealArray4_64,zerosRealArray5_64
+    end interface
+
+    interface eyes
+        module procedure :: eyesRealArray,eyesRealVector
     end interface
 
     interface increment
@@ -215,7 +243,8 @@ module ArrayClass
     end interface
 
     interface print
-        module procedure ::  printArrayInt, printArrayReal,printArrayIntVec, printArrayRealVec
+        module procedure ::  printArrayInt, printArrayReal,printArrayIntVec, printArrayRealVec, printArrayType,&
+            printLogical
     end interface print
 
     interface shape
@@ -330,24 +359,14 @@ module ArrayClass
         module procedure :: minvalIDInt32, minvalIDReal64
     end interface
     
+    interface maxvalID
+        module procedure :: maxvalIDInt32, maxvalIDReal64
+    end interface
+
     type :: FlexibleChar_
         character(len=:),allocatable :: string
     end type
 
-    type :: Array_
-        integer(int32),allocatable  :: inta(:,:)
-        real(real64),allocatable ::reala(:,:)
-        type(FlexibleChar_),allocatable :: list(:,:)
-    contains
-        procedure, public :: array => arrayarrayReal
-        procedure, public :: init => zerosRealArrayArrayClass
-        procedure, public :: zeros => zerosRealArrayArrayClass
-        procedure, public :: eye => eyeRealArrayArrayClass
-        procedure, public :: unit => eyeRealArrayArrayClass
-        procedure, public :: random => randomRealArrayArrayClass
-        procedure, public :: print => printArrayClass
-        
-    end type
 
 
     public :: operator(+)
@@ -371,16 +390,298 @@ module ArrayClass
     
     interface assignment(=)
       module procedure assignArrayAlloInt,assignArrayAlloReal, assignAlloArrayInt,assignAlloArrayReal,&
-        assignVectorFromChar,assignIntVectorFromChar
+        assignVectorFromChar,assignIntVectorFromChar,assignArrayAllointVec
     end interface
 
     interface dot
         module procedure dotArrayClass
     end interface
 
+    interface to_array
+        module procedure to_Array_real64_array,to_Array_int32_array, &
+            to_Array_real64_vector,to_Array_int32_vector,to_Array_int32_vector_2,&
+            to_Array_real64_vector_2,to_Array_int32_vector_3,&
+            to_Array_real64_vector_3,&
+            to_Array_real32_array, &
+            to_Array_real32_vector, &
+            to_Array_real32_vector_2,&
+            to_Array_real32_vector_3,&
+            to_Array_from_keyword
+    end interface to_array
+
+    interface dot_product
+        module procedure dot_productArray_ret_real
+    end interface
+
+
+    interface matmul
+        module procedure matmulArray
+    end interface matmul
+
+    interface transpose
+        module procedure TransposeArrayClass
+    end interface transpose
 
 contains
     
+function to_Array_real64_array(real64_array,dtype) result(ret_array)
+    real(real64),intent(in) :: real64_array(:,:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+    if(present(dtype) )then
+        if( dtype=="int32" .or. dtype=="int")then
+            ret_array = to_Array(int(real64_array))
+            return
+        endif
+    endif
+
+    ret_array%reala = real64_array
+    ret_array%dtype = "real64"
+
+end function
+
+
+function to_Array_real32_array(real32_array,dtype) result(ret_array)
+    real(real32),intent(in) :: real32_array(:,:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+    if(present(dtype) )then
+        if( dtype=="int32" .or. dtype=="int")then
+            ret_array = to_Array(int(real32_array))
+            return
+        endif
+    endif
+
+    ret_array%reala = dble(real32_array)
+    ret_array%dtype = "real64"
+
+end function
+
+function to_Array_int32_array(int32_array,dtype) result(ret_array)
+    integer(int32),intent(in) :: int32_array(:,:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+
+    if(present(dtype) )then
+        if( dtype=="real64" .or. dtype=="float")then
+            ret_array = to_Array(dble(int32_array))
+            return
+        endif
+        if( dtype=="double" .or. dtype=="float64")then
+            ret_array = to_Array(dble(int32_array))
+            return
+        endif
+    endif
+
+    ret_array%inta = int32_array
+    ret_array%dtype = "int32"
+    
+end function
+
+
+
+function to_Array_real64_vector(real64_vector,dtype) result(ret_array)
+    real(real64),intent(in) :: real64_vector(:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+
+    if(present(dtype) )then
+        if( dtype=="int32" .or. dtype=="int")then
+            ret_array = to_Array(int(real64_vector),dtype="int32")
+            return
+        endif
+    endif
+
+    allocate( ret_array%reala(size(real64_vector),1) )
+    ret_array%reala(:,1) = real64_vector(:)
+    ret_array%dtype = "real64"
+
+end function
+
+
+
+function to_Array_real32_vector(real32_vector,dtype) result(ret_array)
+    real(real32),intent(in) :: real32_vector(:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+
+    if(present(dtype) )then
+        if( dtype=="int32" .or. dtype=="int")then
+            ret_array = to_Array(int(real32_vector),dtype="int32")
+            return
+        endif
+    endif
+
+    allocate( ret_array%reala(size(real32_vector),1) )
+    ret_array%reala(:,1) = dble(real32_vector(:))
+    ret_array%dtype = "real64"
+
+end function
+
+
+
+function to_Array_int32_vector(int32_vector,dtype) result(ret_array)
+    integer(int32),intent(in) :: int32_vector(:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+    if(present(dtype) )then
+        if( dtype=="real64" .or. dtype=="float")then
+            ret_array = to_Array(dble(int32_vector))
+            return
+        endif
+        if( dtype=="double" .or. dtype=="float64")then
+            ret_array = to_Array(dble(int32_vector))
+            return
+        endif
+    endif
+
+    allocate( ret_array%inta(size(int32_vector),1) )
+    ret_array%inta(:,1) = int32_vector
+    ret_array%dtype = "int32"
+    
+end function
+
+
+function to_Array_int32_vector_2(int32_vector,int32_vector2,dtype) result(ret_array)
+    integer(int32),intent(in) :: int32_vector(:),int32_vector2(:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+    if(present(dtype) )then
+        if( dtype=="real64" .or. dtype=="float")then
+            ret_array = to_Array(dble(int32_vector),dble(int32_vector2))
+            return
+        endif
+        if( dtype=="double" .or. dtype=="float64")then
+            ret_array = to_Array(dble(int32_vector),dble(int32_vector2))
+            return
+        endif
+    endif
+
+    allocate( ret_array%inta(  &
+    maxval([size(int32_vector),size(int32_vector2)])  ,2) )
+    ret_array%inta(1:size(int32_vector),1) = int32_vector(1:size(int32_vector) )
+    ret_array%inta(1:size(int32_vector2),2) = int32_vector2(1:size(int32_vector2) )
+    ret_array%dtype = "int32"
+    
+end function
+
+function to_Array_real64_vector_2(real64_vector,real64_vector2,dtype) result(ret_array)
+    real(real64),intent(in) :: real64_vector(:),real64_vector2(:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+    if(present(dtype) )then
+        if( dtype=="int32" .or. dtype=="int")then
+            ret_array = to_Array(int(real64_vector),int(real64_vector2))
+            return
+        endif
+    endif
+
+    allocate( ret_array%reala(  &
+    maxval([size(real64_vector),size(real64_vector2)])  ,2) )
+    ret_array%reala(1:size(real64_vector),1) = real64_vector(1:size(real64_vector) )
+    ret_array%reala(1:size(real64_vector2),2) = real64_vector2(1:size(real64_vector2) )
+    ret_array%dtype = "real64"
+    
+end function
+
+
+function to_Array_real32_vector_2(real32_vector,real32_vector2,dtype) result(ret_array)
+    real(real32),intent(in) :: real32_vector(:),real32_vector2(:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+    if(present(dtype) )then
+        if( dtype=="int32" .or. dtype=="int")then
+            ret_array = to_Array(int(real32_vector),int(real32_vector2))
+            return
+        endif
+    endif
+
+    allocate( ret_array%reala(  &
+    maxval([size(real32_vector),size(real32_vector2)])  ,2) )
+    ret_array%reala(1:size(real32_vector),1) = dble(real32_vector(1:size(real32_vector) ))
+    ret_array%reala(1:size(real32_vector2),2) = dble(real32_vector2(1:size(real32_vector2) ))
+    ret_array%dtype = "real64"
+    
+end function
+
+
+
+function to_Array_int32_vector_3(int32_vector,int32_vector2,int32_vector3,dtype) result(ret_array)
+    integer(int32),intent(in) :: int32_vector(:),int32_vector2(:),int32_vector3(:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+    if(present(dtype) )then
+        if( dtype=="real64" .or. dtype=="float")then
+            ret_array = to_Array(dble(int32_vector),dble(int32_vector2),dble(int32_vector3),dtype="real64")
+            return
+        endif
+        if( dtype=="double" .or. dtype=="float64")then
+            ret_array = to_Array(dble(int32_vector),dble(int32_vector2),dble(int32_vector3),dtype="real64")
+            return
+        endif
+    endif
+
+    allocate( ret_array%inta(  &
+    maxval([size(int32_vector),size(int32_vector2),size(int32_vector3)])  ,3) )
+    ret_array%inta(1:size(int32_vector ),1) = int32_vector( 1:size(int32_vector) )
+    ret_array%inta(1:size(int32_vector2),2) = int32_vector2(1:size(int32_vector2) )
+    ret_array%inta(1:size(int32_vector3),3) = int32_vector3(1:size(int32_vector3) )
+    ret_array%dtype = "int32"
+    
+end function
+
+function to_Array_real64_vector_3(real64_vector,real64_vector2,real64_vector3,dtype) result(ret_array)
+    real(real64),intent(in) :: real64_vector(:),real64_vector2(:),real64_vector3(:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+    if(present(dtype) )then
+        if( dtype=="int32" .or. dtype=="int")then
+            ret_array = to_Array(int(real64_vector),int(real64_vector2),int(real64_vector3))
+            return
+        endif
+    endif
+
+    allocate( ret_array%reala(  &
+    maxval([size(real64_vector),size(real64_vector2),size(real64_vector3)])  ,3) )
+    ret_array%reala(1:size(real64_vector),1) = real64_vector(1:size(real64_vector) )
+    ret_array%reala(1:size(real64_vector2),2) = real64_vector2(1:size(real64_vector2) )
+    ret_array%reala(1:size(real64_vector3),3) = real64_vector3(1:size(real64_vector3) )
+    ret_array%dtype = "real64"
+    
+end function
+
+
+function to_Array_real32_vector_3(real32_vector,real32_vector2,real32_vector3,dtype) result(ret_array)
+    real(real32),intent(in) :: real32_vector(:),real32_vector2(:),real32_vector3(:)
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: ret_array
+
+    if(present(dtype) )then
+        if( dtype=="int32" .or. dtype=="int")then
+            ret_array = to_Array(int(real32_vector),int(real32_vector2),int(real32_vector3))
+            return
+        endif
+    endif
+
+    allocate( ret_array%reala(  &
+    maxval([size(real32_vector),size(real32_vector2),size(real32_vector3)])  ,3) )
+    ret_array%reala(1:size(real32_vector),1) =  dble(real32_vector(1:size(real32_vector) ))
+    ret_array%reala(1:size(real32_vector2),2) = dble(real32_vector2(1:size(real32_vector2) ))
+    ret_array%reala(1:size(real32_vector3),3) = dble(real32_vector3(1:size(real32_vector3) ))
+    ret_array%dtype = "real64"
+    
+end function
 
 ! ===============================================
 pure function addArrayClass(x, y) result(z)
@@ -511,6 +812,18 @@ subroutine assignArrayAlloint(x, y)
 end subroutine assignArrayAlloint
 ! ===============================================
 
+! ===============================================
+subroutine assignArrayAllointVec(x, y)
+    implicit none
+    type(Array_), intent(out) :: x
+    integer(int64), intent(in)  :: y(:)
+  
+    allocate(x%inta(size(y),1  ) )
+    x%inta(:,1) = y(:)
+
+end subroutine 
+! ===============================================
+
 
 
 ! ===============================================
@@ -524,6 +837,7 @@ subroutine assignAlloArrayint(x, y)
 
 end subroutine assignAlloArrayint
 ! ===============================================
+
 
 
 ! ############## Elementary Entities ############## 
@@ -4617,6 +4931,36 @@ end function
 
 ! ############################################################
 
+! ############################################################
+pure function eyesRealArray(size1, size2) result(array)
+    integer(int32),intent(in) :: size1, size2
+    real(real64),allocatable :: array(:,:)
+    integer(int32) :: i
+    allocate(array(size1, size2) )
+    array(:,:) = 0.0d0
+
+    do i=1,size1
+        if(i>size2) exit
+        array(i,i) = 1.0d0
+    enddo
+
+end function
+! ############################################################
+pure function eyesRealVector(size1) result(array)
+    integer(int32),intent(in) :: size1
+    real(real64),allocatable :: array(:)
+    integer(int32) :: i
+    allocate(array(size1) )
+    array(:) = 0.0d0
+
+    do i=1,size1
+        array(i) = 1.0d0
+    enddo
+
+end function
+
+! ############################################################
+
 
 ! ############################################################
 pure function zerosRealArray3(size1, size2,size3) result(array)
@@ -5992,7 +6336,7 @@ function EigenValueJacobiMethod(A,x,tol) result(lambda)
             Gk(i,i)=1.0d0
             x(i,i)=1.0d0
         enddo
-        print *, "Eigen Value & Eigen Vector"
+        !print *, "Eigen Value & Eigen Vector"
     endif
     
     Ak = A
@@ -6014,7 +6358,7 @@ function EigenValueJacobiMethod(A,x,tol) result(lambda)
             enddo
         enddo
 
-        print *, p,q,apq_tr
+        !print *, p,q,apq_tr
         if(abs(apq_tr)<= loop_tol)then
             exit
         endif
@@ -6051,6 +6395,7 @@ function EigenValueJacobiMethod(A,x,tol) result(lambda)
 
         ! use Gk matrix
         if(present(x) )then
+            Gk(:,:) = 0.0d0
             do i=1,n
                 Gk(i,i) = 1.0d0
             enddo
@@ -6059,6 +6404,7 @@ function EigenValueJacobiMethod(A,x,tol) result(lambda)
             Gk(q,p) = -sin(theta)
             Gk(q,q) = cos(theta)
             X = matmul(X,Gk)
+            !X = matmul(X,transpose(Gk))
         endif
 
     enddo
@@ -6892,6 +7238,44 @@ recursive pure function minvalIDInt32(vec,opt_id) result(id)
 end function
 ! ###########################################################
 
+recursive pure function maxvalIDInt32(vec,opt_id) result(id)
+    integer(int32),intent(in) :: vec(:)
+    integer(int32),optional,intent(in) :: opt_id
+    integer(int32) :: id
+    integer(int32) :: min_value, half_size
+
+    if(present(opt_id) )then
+        id = opt_id
+    else
+        id = 0
+    endif
+
+    ! odd and even
+    if(size(vec) == 1)then
+        id = id + 1
+        return
+    elseif(size(vec) == 2)then
+        if(vec(1) < vec(2) )then
+            id = id + 2
+        else
+            id = id + 1
+        endif
+        return
+    else
+        half_size = size(vec)/2
+        if( maxval(vec(1:half_size)) < maxval(vec(half_size+1:)) )then
+            ! minval exists half_size+1 - end
+            id = id + half_size + maxvalID(vec(half_size+1:),id )
+        else
+            ! minval exists 1: half_size
+            id = maxvalID(vec(1:half_size),id )
+        endif
+        return
+    endif
+    
+end function
+! ###########################################################
+
 recursive pure function minvalIDReal64(vec,opt_id) result(id)
     real(real64),intent(in) :: vec(:)
     integer(int32),optional,intent(in) :: opt_id
@@ -6929,6 +7313,46 @@ recursive pure function minvalIDReal64(vec,opt_id) result(id)
     endif
     
 end function
+! ##############################################################
+
+recursive pure function maxvalIDReal64(vec,opt_id) result(id)
+    real(real64),intent(in) :: vec(:)
+    integer(int32),optional,intent(in) :: opt_id
+    integer(int32) :: id,half_size
+    
+    
+
+    if(present(opt_id) )then
+        id = opt_id
+    else
+        id = 0
+    endif
+
+    ! odd and even
+    if(size(vec) == 1)then
+        id = id + 1
+        return
+    elseif(size(vec) == 2)then
+        if(vec(1) < vec(2) )then
+            id = id + 2
+        else
+            id = id + 1
+        endif
+        return
+    else
+        half_size = size(vec)/2
+        if( maxval(vec(1:half_size)) < maxval(vec(half_size+1:)) )then
+            ! minval exists half_size+1 - end
+            id = id + half_size + maxvalID(vec(half_size+1:),id )
+        else
+            ! minval exists 1: half_size
+            id = maxvalID(vec(1:half_size),id )
+        endif
+        return
+    endif
+    
+end function
+
 
 function decimateReal64Vec(vec,interval) result(ret_vec) 
     real(real64),intent(in) ::  vec(:)
@@ -6981,18 +7405,9 @@ end function
 
 ! ####################################################################
 pure function appendVectorsInt32(vec1,vec2) result(vec12)
-    integer(int32),allocatable,intent(in) :: vec1(:),vec2(:)
+    integer(int32),intent(in) :: vec1(:),vec2(:)
     integer(int32),allocatable :: vec12(:)
 
-    if(.not.allocated(vec1) )then
-        vec12 = vec2
-        return
-    endif
-    
-    if(.not.allocated(vec2) )then
-        vec12 = vec1
-        return
-    endif
 
     if(size(vec1)==0 )then
         vec12 = vec2    
@@ -7014,18 +7429,18 @@ end function
 
 ! ####################################################################
 pure function appendVectorsReal64(vec1,vec2) result(vec12)
-    real(real64),allocatable,intent(in) :: vec1(:),vec2(:)
+    real(real64),intent(in) :: vec1(:),vec2(:)
     real(real64),allocatable :: vec12(:)
 
-    if(.not.allocated(vec1) )then
-        vec12 = vec2
-        return
-    endif
-    
-    if(.not.allocated(vec2) )then
-        vec12 = vec1
-        return
-    endif
+!    if(.not.allocated(vec1) )then
+!        vec12 = vec2
+!        return
+!    endif
+!    
+!    if(.not.allocated(vec2) )then
+!        vec12 = vec1
+!        return
+!    endif
     
     if(size(vec1)==0 )then
         vec12 = vec2    
@@ -7043,5 +7458,294 @@ pure function appendVectorsReal64(vec1,vec2) result(vec12)
     
 end function
 ! ####################################################################
+
+function setInt32Vector(int32Vector) result(ret)
+    ! remove dupulicated elements
+    ! Ex> [1, 2, 2, 3] > [1, 2, 3]
+    integer(int32),intent(in) :: int32Vector(:)
+    integer(int32),allocatable :: ret(:)
+
+    ret = RemoveOverwrap(int32Vector)
+
+end function
+
+! ###################################################################
+function RemoveOverwrap(vector) result(new_vector)
+    integeR(int32),intent(in) :: vector(:)
+    integer(int32),allocatable :: new_vector(:),buf(:)
+    integer(int32) :: i,j,null_flag,new_size,new_id
+
+    buf = vector
+    
+    call heapsort(n=size(buf),array=buf)
+    
+    null_flag = minval(buf)-1
+    do i=1,size(buf)-1
+        if(buf(i)==null_flag ) cycle
+        do j=i+1,size(buf)
+            if(buf(j)==null_flag ) cycle
+            ! if same, set null_flag
+            if(buf(i)==buf(j) )then
+                buf(j)=null_flag
+            endif
+        enddo
+    enddo
+    
+    ! remove null_flaged values
+    new_size = 0
+    do i=1,size(buf)
+        if(buf(i)/=null_flag )then
+            new_size = new_size + 1
+        endif
+    enddo
+    new_vector = int(zeros(new_size) )
+    new_id = 0
+    do i=1,size(buf)
+        if(buf(i)/=null_flag )then
+            new_id = new_id + 1
+            new_vector(new_id) = buf(i)
+        endif
+    enddo
+
+end function
+! ###################################################################
+pure function RemoveIF(vector,equal_to) result(new_vector)
+    integeR(int32),intent(in) :: vector(:),equal_to
+    integer(int32),allocatable :: new_vector(:)
+    integer(int32) :: i, num_remove,new_id
+
+    num_remove=0
+    do i=1,size(vector)
+        if(vector(i)==equal_to )then
+            num_remove=num_remove+1
+        endif
+    enddo
+    new_vector = int(zeros(size(vector,1)-num_remove ))
+    new_id=0
+    do i=1,size(vector)
+        if(vector(i)==equal_to )then
+            cycle
+        else
+            new_id = new_id+1
+            new_vector(new_id) = vector(i)
+        endif
+    enddo
+end function
+! ###################################################################
+
+subroutine printArrayType(in_array)
+    type(Array_),intent(in) :: in_array
+    integer(int32) :: i
+
+    if(in_array%dtype=="real64")then
+        if(.not.allocated(in_array%reala) ) then
+            print *, "[]"
+        else
+            do i=1,size(in_array%reala,1)
+                print *, in_array%reala(i,:)
+            enddo
+        endif
+    elseif(in_array%dtype=="int32")then
+        if(.not.allocated(in_array%inta) ) then
+            print *, "[]"
+        else
+            do i=1,size(in_array%inta,1)
+                print *, in_array%inta(i,:)
+            enddo
+        endif
+    else
+        print *, "[]"
+    endif
+end subroutine
+
+function matmulArray(Array1, Array2) result(Array3)
+    type(Array_),intent(in) :: Array1, Array2
+    type(Array_) :: Array3
+
+    if(Array1%dtype=="real64")then
+        Array3%reala = matmul( Array1%reala, Array2%reala  )
+        Array3%dtype = "real64"
+    elseif(Array1%dtype=="int32")then
+        Array3%inta = matmul( Array1%inta, Array2%inta  )
+        Array3%dtype = "int32"
+    endif
+
+end function
+
+
+function dot_productArray_ret_real(Array1, Array2) result(ret)
+    type(Array_),intent(in) :: Array1, Array2
+    real(real64) :: ret
+    integer(int32) :: i,j
+
+    if(Array1%dtype=="real64")then
+        ret = 0.0d0
+        !$OMP parallel 
+        !$OMP do reduction(+:ret)
+        do i=1,size(Array1%reala,1)
+            do j=1,size(Array1%reala,2)
+                ret = ret + Array1%reala(i,j)*Array2%reala(i,j)
+            enddo
+        enddo
+        !$OMP end do
+        !$OMP end parallel
+    elseif(Array1%dtype=="int32")then
+        ret = 0.0d0
+        !$OMP parallel 
+        !$OMP do reduction(+:ret)
+        do i=1,size(Array1%reala,1)
+            do j=1,size(Array1%reala,2)
+                ret = ret + Array1%reala(i,j)*Array2%reala(i,j)
+            enddo
+        enddo
+        !$OMP end do
+        !$OMP end parallel
+    endif
+
+end function
+
+
+function TransposeArrayClass(array1) result(ret_Array)
+    class(Array_),intent(in) :: array1
+    type(Array_) :: ret_Array
+
+    if(array1%dtype=="real64")then
+        ret_Array%reala = transpose(array1%reala)
+        ret_Array%dtype = "real64"
+    endif
+
+
+    if(array1%dtype=="int32")then
+        ret_Array%inta = transpose(array1%inta)
+        ret_Array%dtype = "int32"
+    endif
+
+end function
+
+function to_Array_from_keyword(keyword,ndim,dtype) result(array)
+    character(*),intent(in) :: keyword
+    integer(int32),intent(in) :: ndim
+    character(*),optional,intent(in) :: dtype
+    type(Array_) :: array
+    type(Random_) :: random
+
+    if(keyword=="eyes" .or. keyword=="eye")then
+        if(present(dtype) )    then
+            if(dtype=="int32" .or. dtype=="int")then
+                array%inta = int(eyes(ndim, ndim))
+                array%dtype = "int32"
+            else
+                array%reala = eyes(ndim,ndim)    
+                array%dtype = "real64"
+            endif
+        else
+            array%reala = eyes(ndim,ndim)
+            array%dtype = "real64"
+        endif
+        return    
+    elseif(keyword=="random")then
+        if(present(dtype) )then
+            if(dtype=="int32" .or. dtype=="int")then
+                array%inta = int(random%randn(ndim, ndim))
+                array%dtype = "int32"
+            else
+                array%reala = random%randn(ndim,ndim)    
+                array%dtype = "real64"
+            endif
+        else
+            array%reala = random%randn(ndim,ndim)
+            array%dtype = "real64"
+        endif
+        return    
+    endif
+
+end function
+
+subroutine printReal(val)
+    real(real64),intent(in) ::val
+    print *, val
+end subroutine
+
+subroutine printReal32(val)
+    real(real32),intent(in) ::val
+    print *, val
+end subroutine
+
+
+
+subroutine printint(val)
+    integer(int32),intent(in) ::val
+    print *, val
+end subroutine
+
+subroutine printint64(val)
+    integer(int64),intent(in) ::val
+    print *, val
+end subroutine
+
+
+subroutine printLogical(val)
+    logical,intent(in) ::val
+    print *, val
+end subroutine
+
+
+subroutine printcomplex(val)
+    complex(real64),intent(in) ::val
+    print *, val
+end subroutine
+
+subroutine printcomplex32(val)
+    complex(real32),intent(in) ::val
+    print *, val
+end subroutine
+
+
+function getArrayClass(array, row, col) result(val)
+    class(Array_),intent(in) :: array
+    real(real64) ::  val
+    integer(int32),optional,intent(in) :: row, col
+
+    if(array%dtype=="real64")then
+        val  = array%reala(row,col)
+    elseif(array%dtype=="int32")then
+        val  = dble(array%inta(row,col))
+    endif
+
+end function
+
+subroutine setArrayClass(array, row, col,val)
+    class(Array_),intent(inout) :: array
+    real(real64),intent(in) ::  val
+    integer(int32),optional,intent(in) :: row, col
+
+    if(present(row) .and. present(col) )then
+        if(array%dtype=="real64")then
+            array%reala(row,col) = val
+        elseif(array%dtype=="real32")then
+            array%inta(row,col) = int(val)
+        endif
+
+    elseif(present(row) .and. .not.present(col) )then
+        if(array%dtype=="real64")then
+            array%reala(row,:) = val
+        elseif(array%dtype=="real32")then
+            array%inta(row,:) = int(val)
+        endif
+        
+    elseif(.not.present(row) .and. present(col) )then
+        if(array%dtype=="real64")then
+            array%reala(:,col) = val
+        elseif(array%dtype=="real32")then
+            array%inta(:,col) = int(val)
+        endif
+    else
+        if(array%dtype=="real64")then
+            array%reala(:,:) = val
+        elseif(array%dtype=="real32")then
+            array%inta(:,:) = int(val)
+        endif
+    endif
+end subroutine
 
 end module ArrayClass

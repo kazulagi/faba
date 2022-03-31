@@ -85,7 +85,18 @@ module MathClass
 	interface RickerFunction
 		module procedure RickerFunctionReal64
 	end interface
+
+	interface derivative
+		module procedure derivative_scalar,derivative_vector
+	end interface
 	
+	interface der
+		module procedure derivative_scalar,derivative_vector
+	end interface
+	
+	interface d_dx
+		module procedure derivative_scalar,derivative_vector
+	end interface
 contains
 
 ! ###############################################
@@ -2562,7 +2573,7 @@ pure function RickerFunctionReal64(t, sigma, center)  result(ft)
 	real(real64),intent(in) :: t, sigma
 	real(real64),optional,intent(in) :: center
 	type(Math_)  :: math
-	real(real128) ::ft128
+	real(real64) ::ft128
 	real(real64) :: ft, b
 
 	if(present(center) )then
@@ -2578,5 +2589,125 @@ pure function RickerFunctionReal64(t, sigma, center)  result(ft)
 
 end function
 ! ########################################################################
+
+
+! ########################################################
+real(real64) function derivative_scalar(func,x,eps)
+    ! >>> Define func()
+    interface 
+        real(real64) function func(x)
+            use iso_fortran_env
+            real(real64),intent(in) :: x
+        end function
+    end interface 
+
+    ! <<<
+
+    ! >>> arg
+    real(real64),intent(in) :: x
+    real(real64),optional,intent(in) :: eps
+    ! <<< 
+
+    real(real64)  :: eps_val =dble(1.0e-4)
+    if(present(eps) )then
+        eps_val = eps
+    endif
+    
+    ! >>> operation
+    ! numerical derivative 
+    
+    derivative_scalar = (func(x+eps_val) - func(x-eps_val) )/(2.0d0*eps_val)
+    ! <<<
+
+end function
+
+! ########################################################
+function derivative_vector(func,x,dim_num,eps) result(ret)
+    integer(int32),intent(in) :: dim_num
+    ! >>> Define func()
+    interface 
+        function func(x) result(ret)
+            use iso_fortran_env
+            real(real64),intent(in) :: x(:)
+            real(real64),allocatable :: ret(:)
+        end function
+    end interface 
+    ! <<<
+
+    ! >>> arg
+    real(real64),intent(in) :: x(1:dim_num)
+    real(real64),optional,intent(in) :: eps
+    ! <<< 
+
+    ! >>> output
+    real(real64),allocatable :: ret(:)
+    ! <<< 
+
+    real(real64) :: x_f(1:dim_num)
+    real(real64) :: x_b(1:dim_num)
+    real(real64)  :: eps_val =dble(1.0e-4)
+    
+	if(present(eps) )then
+        eps_val = eps
+    endif
+
+    ret = x
+    x_f = x
+    x_f(:) = x_f(:) + eps_val
+    x_b = x
+    x_b(:) = x_b(:) - eps_val
+    
+    ! >>> operation
+    ! numerical derivative 
+    
+    ret = (func(x_f) - func(x_b) )/(2.0d0*eps_val)
+    ! <<<
+
+end function
+! ########################################################
+
+real(real64) function polynomial(x,params)
+    real(real64),intent(in) :: x
+    real(real64),intent(in) :: params(:)
+    integer(int32) :: i , n   ,order_
+    
+    n = size(params)
+    ! (n-1)-order polynomial
+    polynomial = 0.0d0
+    order_ = 0
+    do i=n-1,0,-1
+        order_ = order_ + 1
+        polynomial = polynomial + params(order_) * (x**i)
+    enddo
+    
+end function
+
+! ###########################################################
+real(real64) function sigmoid(x,params)
+	real(real64),intent(in) :: x,params(:)
+
+	if(size(params)==0 )then
+		sigmoid = 1.0d0/(1.0d0 + exp(- (x) ) )
+	elseif(size(params)==1 )then
+		sigmoid = 1.0d0/(1.0d0 + exp(- params(1)*(x) ) )
+	elseif(size(params)==2 )then
+		sigmoid = 1.0d0/(1.0d0 + exp(- params(1)*(x-params(2)) ) )
+	else
+		sigmoid = 1.0d0/(1.0d0 + exp(- params(1)*(x-params(2)) ) )*params(3)
+	endif
+
+end function
+! ###########################################################
+
+! ###########################################################
+real(real64) function logit(x,params)
+	real(real64),intent(in) :: x,params(:)
+
+	logit = log(x/(1-x) )
+
+end function
+! ###########################################################
+
+
 
 end module MathClass

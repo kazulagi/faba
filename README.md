@@ -13,5 +13,12 @@ sudo apt -y install libatlas3-base
 sudo apt -y install libatlas-base-dev
 ```
 
+## Tutorial 
+Please search examples by 
+
+```
+faba --search [your keyword]
+```
+
 ## Try!
 [![Try in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1ThbNdy2OnZyhM0p8wF_A31RTuEqkS_AX#scrollTo=TqlwtzhDbwcZ)
