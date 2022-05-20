@@ -23,4 +23,5 @@ program main
     print *, "Is vector allocated? :: ",allocated(vector)
 
     call mpid%end()
+    
 end program main

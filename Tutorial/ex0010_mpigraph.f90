@@ -1,5 +1,5 @@
 program main
-    use std
+    use faba
     implicit none
 
     type(MPI_)   :: mpid

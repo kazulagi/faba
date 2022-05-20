@@ -1,6 +1,6 @@
 program doTest
     !$use omp_lib
-    use plantFEM
+    use faba
 
     implicit none
     
