@@ -5,6 +5,10 @@ module ArrayClass
     implicit none
 
 
+    type :: FlexibleChar_
+        character(len=:),allocatable :: string
+    end type
+
     type :: Array_
         integer(int32),allocatable  :: inta(:,:)
         real(real64),allocatable ::reala(:,:)
@@ -363,9 +367,6 @@ module ArrayClass
         module procedure :: maxvalIDInt32, maxvalIDReal64
     end interface
 
-    type :: FlexibleChar_
-        character(len=:),allocatable :: string
-    end type
 
 
 
