@@ -119,10 +119,10 @@ echo "Compiling ./src/EquationClass/EquationClass.f90 "
 echo " >> EquationClass.o "
 echo " | =>      | (40%)\r\c"
 gfortran -Ofast -fopenmp -fopenacc -shared -fPIC -g -fcheck=all -fintrinsic-modules-path inc/  -c ./src/EquationClass/EquationClass.f90 -o  ./inc/Equation.o -llapack -lblas
-echo "Compiling ./src/MPIClass/MPIClass.f90       "
-echo " >> MPIClass.o"
-echo " | =>      | (50%)\r\c "
-gfortran -Ofast -fopenmp -fopenacc -shared -fPIC -g -fcheck=all -fintrinsic-modules-path inc/  -c ./src/MPIClass/MPIClass.f90 -o  ./inc/MPIClass.o -llapack -lblas
+#echo "Compiling ./src/MPIClass/MPIClass.f90       "
+#echo " >> MPIClass.o"
+#echo " | =>      | (50%)\r\c "
+#gfortran -Ofast -fopenmp -fopenacc -shared -fPIC -g -fcheck=all -fintrinsic-modules-path inc/  -c ./src/MPIClass/MPIClass.f90 -o  ./inc/MPIClass.o -llapack -lblas
 echo "Compiling ./src/DictionaryClass/DictionaryClass.f90      "
 echo " >> DictionaryClass.o"
 echo " | =>      | (50%)\r\c "
@@ -184,17 +184,18 @@ echo " >> PhysicalFieldClass.o "
 echo " | ======> | (100%)\r\c"
 echo "Standard library (PhysicalFieldClass) is compiled."
 gfortran -Ofast -fopenmp -fopenacc -shared -fPIC -g -fcheck=all -fintrinsic-modules-path inc/  -c ./src/PhysicalFieldClass/PhysicalFieldClass.f90 -o  ./inc/PhysicalFieldClass.o -llapack -lblas
-echo "Compiling ./src/faba/faba.f90 " 
+echo "Compiling ./src/faba_nonmpi/faba.f90 " 
 echo " >> faba.o "
 echo " | ======> | (100%)\r\c"
 echo "Standard library (faba) is compiled.          "
-gfortran -fopenmp -fopenacc -shared -fPIC -g -fcheck=all -fintrinsic-modules-path inc/  -c ./src/faba/faba.f90 -o  ./inc/faba.o -llapack -lblas
+gfortran -fopenmp -fopenacc -shared -fPIC -g -fcheck=all -fintrinsic-modules-path inc/  -c ./src/faba_nonmpi/faba.f90 -o  ./inc/faba.o -llapack -lblas
 
 mv *.mod inc/
-sudo chmod +x ./faba
+chmod +x ./faba
+chmod +x ./faba_nonmpi
 
 #create symbolic link
-sudo ln -si $PWD/faba /usr/local/bin/faba
+#ln -si $PWD/faba /usr/local/bin/faba
 
 echo " "
 echo "Faba (21.10) is successfully installed! "

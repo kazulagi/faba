@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ $1 = "--search" ]; then
+    echo "searching examples..."
+    echo "---------------------"
+    grep -ril "$2" Tutorial/
+    echo "---------------------"
+    exit 0
+else
+    echo ">>> $1"
+    gfortran -fopenmp inc/*o -I./inc "$1"  -g -fcheck=all  -fintrinsic-modules-path inc/  -o "${1%.*}.out"
+fi
+
+
